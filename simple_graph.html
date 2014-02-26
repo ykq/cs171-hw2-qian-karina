@@ -20,7 +20,6 @@
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="github.js"></script>
   <form>
   Layout:
     <label><input type="radio" name="layout" value="force" checked> Force</label>
@@ -41,25 +40,18 @@
   </form>
 <script>
 
-/*
-var github = new Github({
-  username: "ykq",
-  password: "nalori55",
-  auth: "basic"
-});
-
-var repo = github.getRepo(stamen, fieldpapers);
-repo.show(function(err,repo) {});
-repo.listBranches(function(err, branches {}));*/
-
-var branches = new Array();
-
-d3.json("https://api.github.com/repos/stamen/modestmaps-js/branches", function(err,data) {data.forEach(function (d,i) { (branches[i] = d.commit.sha);})});
-
 var commits = new Array();
-var users = new Array();
+commits.branchname = null;
 
-d3.json("https://api.github.com/repos/stamen/modestmaps-js/commits", function(err,data) {data.forEach(function (d,i) { (commits[i] = d); (users[i] = d.committer.id); })});
+var branches = d3.json("https://api.github.com/repos/stamen/modestmaps-js/branches", function (err,data) {data.forEach(function (d,i) { 
+    (branches[i] = d.commit.sha);
+
+  d3.json("https://api.github.com/repos/stamen/modestmaps-js/commits/" + d.commit.sha, function (err, data) { 
+    data.forEach(function (e, j) {
+    (commits=e);
+    (branchname= branches[i]);
+  })})
+})});
 
 
 var width = 900,
@@ -71,11 +63,11 @@ var svg = d3.select("body").append("svg")
 
 var fill = d3.scale.category10();
 
-var graph = {nodes:[], links:[]};
+var graph = {nodes: new Array(), links: new Array() };
 
-var nb_nodes = commits.length, nb_cat = users.length;
+graph.nodes = d3.json("https://api.github.com/repos/stamen/modestmaps-js/commits", function(err, data) {data.forEach(function (d,i) { (graph.nodes[i] = d);})});
 
-graph.nodes = d3.range(nb_nodes).map(function (d,i) { return { commits[i]}; })
+//d3.range(commits.length).map(function (d,i) { return commits.sha  });
 
 /*graph.nodes = d3.range(nb_nodes).map(function() {  
   return { cat:Math.floor(nb_cat*Math.random()) }; 
@@ -84,7 +76,7 @@ graph.nodes = d3.range(nb_nodes).map(function (d,i) { return { commits[i]}; })
 graph.nodes.map(function(d, i) {
 
   graph.nodes.map(function(e, j) {
-    if(Math.random()>.99 && i!=j)
+    if(graph.nodes[i].sha>0 && i!=j)
       graph.links.push({"source": i, "target": j})
 
   })
