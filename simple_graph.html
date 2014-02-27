@@ -38,11 +38,18 @@
     <label><input type="radio" name="size" value="nosize" checked> None</label>
     <label><input type="radio" name="size" value="size_cat" > Category</label>
   </form>
+    <form>
+  Scale:
+    <label><input type="radio" name="scale" value="Index" checked> Index</label>
+    <label><input type="radio" name="scale" value="Time" > Time</label>
+  </form>
+
 <script>
 
 var branches = new Array();
 var commits = new Array();
     commits.branchname = null;
+    commits.cat = null
 var allcommits = new Array();
 var graph = {nodes: new Array(), links: new Array() };
 var finished = 1;
@@ -61,14 +68,13 @@ function getCommits() {
             data.forEach(function (e, g) {
               commits[g] = e;
               commits[g].branchname = branches[i];
+              commits[g].cat = branches[i].charCodeAt(0);
               graph.nodes.push(commits[g]);
             })
                 if (! --finished) {
       beginGraph();
-
         }
       })})}
-
 
 var width = 900,
     height = 700;
@@ -78,7 +84,6 @@ var svg = d3.select("body").append("svg")
             .attr("height", height);
 
   var fill = d3.scale.category10();
-
 
 function beginGraph() {
 
@@ -96,10 +101,23 @@ graph.nodes.map(function (d, i) {
   })
 })
 
+node = svg.selectAll(".node")
+    .data(graph.nodes)
+    .enter()
+    .append("g").attr("class", "node")
+    .append("circle")
+    .attr("r", 5);
+
+link = svg.selectAll(".link")
+    .data(graph.links)
+    .enter()
+    .append("g")
+    .attr("class", "link")    
+    .append("line")
+    .style("stroke-width", 2)     
+    .style("stroke", "#ccc");
+
 force_layout();
-
-
-console.log("why?");
 
 }
 
@@ -141,6 +159,8 @@ function line_layout() {
 
   force.stop();
 
+  //var ordinal = d3.scale.ordinal().domain()
+
   graph.nodes.forEach(function (d, i) {
     d.y = height/2;
   })
@@ -153,8 +173,15 @@ function line_cat_layout() {
   force.stop();
 
   graph.nodes.forEach(function (d, i) {
-    d.y = height/2 + d.cat*20;
+    d.cat = d.branchname.charCodeAt(0);
+    if (d.cat !=null) {
+    d.y = height/2 + d.cat*2;
+    }
+    else {
+      d.y = height/2;
+    }
   })
+
 
   graph_update(500);
 }
@@ -225,20 +252,18 @@ d3.select("input[value=\"nosize\"]").on("click", function() {
 
 d3.select("input[value=\"size_cat\"]").on("click", category_size);
 
-var link = svg.selectAll(".link")
-              .data(graph.links)
-            .enter().append("line")
-              .attr("class", "link")
+d3.select("input[value=\"Index\"]").on("click", index);
+d3.select("input[value=\"Time\"]").on("click", time);
 
-var node = svg.selectAll(".node")
-              .data(graph.nodes)
-            .enter()
-              .append("g").attr("class", "node");
+var yAxis = d3.svg.axis()
+                  .scale(yScale)
+                  .orient("left")
+                  .ticks(3);
 
-node.append("circle")
-    .attr("r", 5)
+var link = new Array(); 
 
-force_layout();
+var node = new Array(); 
+
 
 </script>
 </body>
