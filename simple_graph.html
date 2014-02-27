@@ -42,7 +42,7 @@
 
 var branches = new Array();
 var commits = new Array();
-commits.branchname = null;
+    commits.branchname = null;
 var allcommits = new Array();
 var graph = {nodes: new Array(), links: new Array() };
 var finished = 1;
@@ -77,9 +77,10 @@ var svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height);
 
-function beginGraph() {
-
   var fill = d3.scale.category10();
+
+
+function beginGraph() {
 
 var nb_nodes = graph.nodes.length, nb_cat = branches.length;
 
@@ -94,9 +95,14 @@ graph.nodes.map(function (d, i) {
     })
   })
 })
+
+force_layout();
+
+
+console.log("why?");
+
 }
 
-// Generate the force layout
 var force = d3.layout.force()
     .size([width, height])
     .charge(-50)
@@ -110,7 +116,6 @@ function tick(d) {
 
   graph_update(0);
 }
-
 
 function random_layout() {
   
@@ -129,6 +134,7 @@ function force_layout() {
  force.nodes(graph.nodes)
       .links(graph.links)
       .start();
+
 }
 
 function line_layout() {
