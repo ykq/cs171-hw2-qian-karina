@@ -50,6 +50,7 @@ var branches = new Array();
 var commits = new Array();
     commits.branchname = null;
     commits.cat = null
+    commits.date = null;
 var allcommits = new Array();
 var graph = {nodes: new Array(), links: new Array() };
 var finished = 1;
@@ -63,12 +64,14 @@ d3.json("https://api.github.com/repos/stamen/modestmaps-py/branches", function (
 
 function getCommits() {
   finished = branches.length;
-      branches.forEach(function (d, i) {
+      branches.forEach(function (d, i) {       
         d3.json("https://api.github.com/repos/stamen/modestmaps-py/commits?per_page=100&sha=" + branches[i], function (err,data) {
             data.forEach(function (e, g) {
               commits[g] = e;
               commits[g].branchname = branches[i];
               commits[g].cat = branches[i].charCodeAt(0);
+              commits[g].date = e.commit.committer.date;
+              commits[g].parsed = Date.parse(new Date(commits[g].date)); 
               graph.nodes.push(commits[g]);
             })
                 if (! --finished) {
@@ -83,7 +86,7 @@ var svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height);
 
-  var fill = d3.scale.category10();
+var fill = d3.scale.category10();
 
 function beginGraph() {
 
@@ -155,12 +158,47 @@ function force_layout() {
 
 }
 
-function line_layout() {
+function indexed() {
 
   force.stop();
 
-  //var ordinal = d3.scale.ordinal().domain()
+  var ordinal = d3.scale.linear()
+  .domain([0, graph.nodes.length]).rangePoints([50, width*0.8], 1.0);
 
+  console.log(ordinal(5));
+  
+  graph.nodes.forEach(function (d, i) {
+    d.y = height/2;
+    console.log(i);
+    d.x = ordinal(i);
+    console.log(d.x);
+  })
+
+  graph_update(500);
+}
+
+function timed() {
+
+  force.stop();
+
+  var timescale = d3.time.scale()
+    .domain([d3.min(graph.nodes, function (d) { return d.parsed }), d3.max(graph.nodes, function (d, i) { return d.parsed })])
+    .range([50, width*0.8]);
+
+  graph.nodes.forEach(function (d, i) {
+    d.y = height/2;
+    d.x = timescale(d.parsed);
+  })
+
+  graph_update(500);
+}
+
+
+
+function line_layout() {
+
+  force.stop();
+  
   graph.nodes.forEach(function (d, i) {
     d.y = height/2;
   })
@@ -252,17 +290,22 @@ d3.select("input[value=\"nosize\"]").on("click", function() {
 
 d3.select("input[value=\"size_cat\"]").on("click", category_size);
 
-d3.select("input[value=\"Index\"]").on("click", index);
-d3.select("input[value=\"Time\"]").on("click", time);
-
-var yAxis = d3.svg.axis()
-                  .scale(yScale)
-                  .orient("left")
-                  .ticks(3);
+d3.select("input[value=\"Index\"]").on("click", indexed);
+d3.select("input[value=\"Time\"]").on("click", timed);
 
 var link = new Array(); 
 
 var node = new Array(); 
+
+var yAxis = d3.svg.axis()
+            .scale(yScale)
+            .orient("left")
+            .ticks(3);
+    
+    svg.append("g")
+       .attr("class", "yaxis")
+       .attr("transform", "translate(" + padding + ",0)")
+       .call(yAxis);
 
 
 </script>
