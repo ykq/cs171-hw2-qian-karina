@@ -125,7 +125,7 @@ d3.json("https://api.github.com/repos/stamen/modestmaps-py/branches", function (
 function getCommits() {
   finished = branches.length;
       branches.forEach(function (d, i) {       
-        d3.json("https://api.github.com/repos/stamen/modestmaps-py/commits?per_page=100&sha=" + branches[i], function (err,data) {
+        d3.json("https://api.github.com/repos/stamen/modestmaps-py/commits?per_page=30&sha=" + branches[i], function (err,data) {
             data.forEach(function (e, g) {
               commits[g] = e;
               commits[g].branchname = branches[i];
@@ -182,14 +182,14 @@ function beginGraph() {
 graph.nodes.map(function (d, i) {
   graph.nodes.map(function (e, j) {
     e.parents.map(function (f, k) {
-      if (d.sha != e.sha) {
-        if(d.sha == f.sha) {
-        graph.links.push({"target": i, "source": j});
+      if (d.author != null) {
+        if (d.commit.committer.name != e.commit.committer.name) {
+          graph.links.push({"target": i, "source": j});
         }
       }
     })
   })
-})
+});
 
 node = svg.selectAll("node")
     .data(graph.nodes)
@@ -244,19 +244,18 @@ link = svg.selectAll(".link")
     .style("stroke", "#ccc")
     .attr("marker-end", "url(#end)");
 
-    var linkedByIndex = {};
-    graph.links.forEach(function (d) {
-        linkedByIndex[d.source.index + "," + d.target.index] = 1;
-    });
 
 force_layout();
 
 }
 
+linkramp=d3.scale.linear().domain([2,10,40]).range([100,300,400]).clamp(true);
+
 var force = d3.layout.force()
     .size([width, height])
-    .charge(-50)
-    .linkDistance(10)
+    .charge(-200)
+    .gravity(0.05)
+    .linkDistance(function (d) {return linkramp(d.source.weight +d.target.weight)})
     .on("tick", tick)
     .on("start", function(d) {})
     .on("end", function(d) {});
